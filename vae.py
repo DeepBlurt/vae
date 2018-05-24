@@ -147,3 +147,6 @@ class Vae(object):
         saver = tf.train.Saver(self.param_dict)
         path = saver.save(self.sess, model_path)
         print("Model saved in:" + path)
+
+if __name___ == "__main__":
+    print("lsdfa")
