@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 mnist = input_data.read_data_sets("MNIST_data", one_hot=True)
 batch_size = 100
-epoch = 8000
+epoch = 500
 input_placeholder = tf.placeholder(tf.float32, [batch_size, 784])
 
 vae = Vae(input_placeholder, "./model/model.ckpt")
@@ -40,8 +40,8 @@ with tf.Session() as sess:
     recon = sess.run(reconstruct, feed_dict={input_placeholder: batch})
 
 n = 10
-recon = np.reshape(recon, (100, 28, 28))
-batch = np.reshape(batch, (100, 28, 28))
+recon = np.reshape(recon, (batch_size, 28, 28))
+batch = np.reshape(batch, (batch_size, 28, 28))
 print(recon.shape)
 gallery = np.zeros((28*n, 28*2*n))
 print(batch.shape)
@@ -54,4 +54,4 @@ for i in range(n):
 
 plt.figure()
 plt.imshow(gallery, cmap="gray")
-plt.show()
+plt.imsave('result.png')

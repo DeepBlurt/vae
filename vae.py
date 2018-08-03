@@ -77,10 +77,10 @@ def vae_sample_layer(input_tensor, output_dim, name, param_dict):
 
         epsilon = tf.random_normal(tf.shape(bias_var))
         z = tf.sqrt(tf.exp(gaussian_var)) * epsilon + gaussian_mean
-        param_dict[scope + "weight"] = weight_mean
-        param_dict[scope + "bias"] = bias_mean
-        param_dict[scope + "weight"] = weight_var
-        param_dict[scope + "bias"] = bias_var
+        param_dict[scope + "weight_mean"] = weight_mean
+        param_dict[scope + "bias_mean"] = bias_mean
+        param_dict[scope + "weight_var"] = weight_var
+        param_dict[scope + "bias_var"] = bias_var
     return gaussian_mean, gaussian_var, z
 
 
@@ -107,7 +107,12 @@ class Vae(object):
         self.df2 = vae_layer(self.df1, 256, 'dec_fc2', self.param_dict)
         self.df3 = vae_layer(self.df2, 384, 'dec_fc3', self.param_dict)
         self.df4 = vae_layer(self.df3, 512, 'dec_fc4', self.param_dict)
+
         self.reconstruct = vae_layer(self.df4, self.input_dim, 'dec_fc5', self.param_dict, tf.nn.sigmoid)
+
+        for key, val in self.param_dict.items():
+            print(key, val)
+
         # loss
         self.kl_loss = tf.reduce_mean(-0.5 * tf.reduce_sum(1+self.log_var-tf.square(self.mean)-tf.exp(self.log_var),
                                                            reduction_indices=1))
@@ -120,14 +125,14 @@ class Vae(object):
         # load parameters
         self.sess = tf.Session()
         self.modelPath = model_path
+        self.var_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+
         if not os.path.exists(model_path+'.index'):
             init = tf.global_variables_initializer()
             self.sess.run(init)
             print("Model not trained, should start training.")
         else:
             self.load(model_path)
-            init = tf.global_variables_initializer()
-            self.sess.run(init)
             print("Loaded parameters from file.")
 
     def train_op(self, learning_rate=0.001):
@@ -137,16 +142,14 @@ class Vae(object):
 
     def load(self, model_path):
         print(model_path)
-        saver = tf.train.Saver(self.param_dict)
-        saver.restore(self.sess, model_path)
+        saver = tf.train.Saver(self.var_list)
+        saver.restore(self.sess, tf.train.latest_checkpoint("./model/"))
 
     def predict(self):
         return self.reconstruct
 
     def save(self, model_path):
-        saver = tf.train.Saver(self.param_dict)
+        saver = tf.train.Saver(self.var_list)
         path = saver.save(self.sess, model_path)
         print("Model saved in:" + path)
 
-if __name___ == "__main__":
-    print("lsdfa")
